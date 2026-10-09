@@ -209,3 +209,21 @@ artifacts/lajes-visual/
 
 # Local diagnostic captures and isolated preview snapshots.
 /artifacts/
+
+screenshots/
+
+*.log
+
+*.pid
+
+.agents/
+
+.agentsweb/
+
+.omgithub-runtime/
+
+.opencode-ssh/
+
+.opencode-web/
+
+node_modules/

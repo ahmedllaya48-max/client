@@ -1,0 +1,171 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>لعبة الدودة المتطورة 🪱 ثلاثية الأبعاد واقعية</title>
+<meta name="description" content="لعبة دودة ثلاثية الأبعاد واقعية: كُل التفاح والفطر، اهرب من الجدار، ونافس ديدان ذكية. مجانية وتعمل في المتصفح.">
+<style>
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; overflow: hidden; background: #0a1410;
+    font-family: "Segoe UI", Tahoma, Arial, sans-serif; }
+  #game-canvas { position: fixed; inset: 0; width: 100%; height: 100%; display: block; touch-action: none; }
+  .hidden { display: none !important; }
+  .overlay { position: fixed; inset: 0; z-index: 20; display: flex; align-items: center;
+    justify-content: center; background: rgba(5, 15, 8, 0.72); backdrop-filter: blur(4px);
+    padding: 16px; overflow-y: auto; }
+  .card { background: linear-gradient(160deg, #12291a, #0c1d12); border: 2px solid #4caf50;
+    border-radius: 18px; padding: 26px 30px; max-width: 520px; width: 100%;
+    text-align: center; color: #e8f5e9; box-shadow: 0 12px 60px rgba(76, 175, 80, 0.35); }
+  .card h1 { margin: 0 0 6px; font-size: 30px; color: #9fff9f; }
+  .card p { color: #c8e6c9; line-height: 1.9; margin: 8px 0; }
+  .row { margin: 12px 0; }
+  .row label { display: block; margin-bottom: 6px; color: #a5d6a7; font-weight: bold; }
+  #player-name { width: 100%; padding: 10px 14px; font-size: 17px; border-radius: 10px;
+    border: 1px solid #4caf50; background: #0a1a0e; color: #fff; text-align: center; }
+  .pick { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; }
+  .pick button { padding: 9px 16px; border-radius: 12px; border: 2px solid #33691e;
+    background: #1b3a22; color: #e8f5e9; font-size: 15px; cursor: pointer; }
+  .pick button.sel { border-color: #9fff9f; background: #2e7d32; box-shadow: 0 0 12px #4caf50; }
+  .dot { display: inline-block; width: 14px; height: 14px; border-radius: 50%; margin-left: 6px; vertical-align: middle; }
+  .big-btn { margin-top: 14px; padding: 14px 46px; font-size: 21px; font-weight: bold;
+    border: none; border-radius: 14px; cursor: pointer; color: #062b0c;
+    background: linear-gradient(180deg, #9fff9f, #4caf50); box-shadow: 0 6px 24px rgba(76, 175, 80, 0.5); }
+  .big-btn:active { transform: scale(0.97); }
+  .ghost-btn { margin-top: 10px; padding: 9px 22px; font-size: 15px; border-radius: 10px;
+    border: 1px solid #4caf50; background: transparent; color: #c8e6c9; cursor: pointer; }
+  #hud { position: fixed; inset: 0; z-index: 10; pointer-events: none; }
+  #stats { position: absolute; top: 12px; right: 12px; background: rgba(5, 20, 10, 0.68);
+    border: 1px solid #4caf50; border-radius: 14px; padding: 10px 16px; color: #fff;
+    font-size: 16px; line-height: 1.9; min-width: 150px; }
+  #stats b { color: #9fff9f; }
+  #board { position: absolute; top: 12px; left: 12px; background: rgba(5, 20, 10, 0.68);
+    border: 1px solid #4caf50; border-radius: 14px; padding: 10px 14px; color: #fff;
+    font-size: 14px; min-width: 170px; }
+  #board .brow { display: flex; justify-content: space-between; gap: 12px; padding: 2px 0; }
+  #board .brow.me { color: #9fff9f; font-weight: bold; }
+  #board h3, #stats h3 { margin: 0 0 6px; font-size: 14px; color: #a5d6a7; }
+  #minimap { position: absolute; bottom: 14px; right: 14px; border-radius: 50%;
+    border: 2px solid #4caf50; background: rgba(5, 20, 10, 0.6); }
+  #boost-wrap { position: absolute; bottom: 16px; left: 16px; width: 150px; pointer-events: none; }
+  #boost-wrap small { color: #c8e6c9; }
+  #boost-bar { height: 12px; border-radius: 8px; background: #1b3a22; border: 1px solid #4caf50; overflow: hidden; }
+  #boost-fill { height: 100%; width: 35%; background: linear-gradient(90deg, #ffd54f, #ff9800); transition: width 0.15s; }
+  #boost-btn { position: absolute; bottom: 90px; left: 22px; width: 74px; height: 74px;
+    border-radius: 50%; border: 3px solid #ffd54f; background: rgba(255, 152, 0, 0.35);
+    color: #fff; font-size: 32px; pointer-events: auto; cursor: pointer; }
+  #boost-btn:active { background: rgba(255, 152, 0, 0.7); }
+  #mute-btn { position: absolute; top: 12px; left: 50%; transform: translateX(-50%);
+    pointer-events: auto; background: rgba(5, 20, 10, 0.68); border: 1px solid #4caf50;
+    color: #fff; border-radius: 10px; font-size: 18px; padding: 4px 12px; cursor: pointer; }
+  #pause-hint { position: absolute; bottom: 14px; left: 50%; transform: translateX(-50%);
+    color: rgba(255, 255, 255, 0.65); font-size: 13px; background: rgba(0, 0, 0, 0.4);
+    padding: 4px 14px; border-radius: 10px; }
+  #final-score { font-size: 52px; color: #ffd54f; font-weight: bold; }
+  .stat-line { display: flex; justify-content: space-around; margin: 12px 0; }
+  .stat-line div { display: flex; flex-direction: column; }
+  .stat-line b { font-size: 26px; color: #9fff9f; }
+  .stat-line span { color: #a5d6a7; font-size: 14px; }
+  #new-record { color: #ffd54f; font-weight: bold; font-size: 19px; animation: blink 1s infinite; }
+  @keyframes blink { 50% { opacity: 0.4; } }
+  kbd { background: #1b3a22; border: 1px solid #4caf50; border-radius: 6px; padding: 1px 8px; font-size: 13px; }
+  @media (max-width: 640px) {
+    #board { display: none; }
+    .card { padding: 18px; }
+    .card h1 { font-size: 23px; }
+  }
+</style>
+<script type="importmap">
+{ "imports": { "three": "./vendor/three.module.js" } }
+</script>
+</head>
+<body>
+<canvas id="game-canvas"></canvas>
+
+<div id="hud" class="hidden">
+  <div id="stats">
+    <h3>🪱 إحصائياتك</h3>
+    النقاط: <b id="score">0</b><br>
+    الطول: <b id="length">10</b><br>
+    الأفضل: <b id="best">0</b>
+  </div>
+  <div id="board"><h3>🏆 المتصدرون</h3><div id="board-rows"></div></div>
+  <div id="board-rows-host" style="display:none"></div>
+  <button id="mute-btn" title="كتم الصوت (M)">🔊</button>
+  <canvas id="minimap" width="132" height="132"></canvas>
+  <div id="boost-wrap"><small>⚡ تسريع</small><div id="boost-bar"><div id="boost-fill"></div></div></div>
+  <button id="boost-btn" title="تسريع">⚡</button>
+  <div id="pause-hint">الماوس أو السحب للتوجيه · <kbd>مسافة</kbd> تسريع · <kbd>P</kbd> إيقاف · <kbd>M</kbd> صوت</div>
+</div>
+
+<div id="menu" class="overlay">
+  <div class="card">
+    <h1>🪱 لعبة الدودة المتطورة</h1>
+    <p>دودة ثلاثية الأبعاد واقعية في مرج أخضر — كُل <b>🍎 التفاح</b> و<b>🍄 الفطر</b> لتكبر،
+    اهرب من <b>🧱 الجدار الحجري</b> ولا تصطدم بالديدان الأكبر منك!</p>
+    <div class="row">
+      <label for="player-name">اسم دودتك</label>
+      <input id="player-name" maxlength="14" placeholder="مثال: صاروخ الصحراء">
+    </div>
+    <div class="row">
+      <label>لون الدودة</label>
+      <div class="pick" id="skin-pick">
+        <button data-v="0"><span class="dot" style="background:#4caf50"></span>خضراء</button>
+        <button data-v="1"><span class="dot" style="background:#42a5f5"></span>زرقاء</button>
+        <button data-v="2"><span class="dot" style="background:#ff9800"></span>برتقالية</button>
+        <button data-v="3"><span class="dot" style="background:#ab47bc"></span>بنفسجية</button>
+      </div>
+    </div>
+    <div class="row">
+      <label>الصعوبة (أفضل نتيجة: <b id="menu-best">0</b>)</label>
+      <div class="pick" id="diff-pick">
+        <button data-v="easy">😊 سهلة</button>
+        <button data-v="mid">😐 متوسطة</button>
+        <button data-v="hard">😈 صعبة</button>
+      </div>
+    </div>
+    <button class="big-btn" id="start-btn">▶ ابدأ اللعب</button><br>
+    <button class="ghost-btn" id="menu-mute">🔊 الصوت</button>
+    <p><small>🖱️ الماوس أو السحب للتوجيه · <kbd>A</kbd>/<kbd>D</kbd> أو <kbd>◀</kbd>/<kbd>▶</kbd> للدوران ·
+    <kbd>مسافة</kbd> أو <kbd>⚡</kbd> للتسريع (يستهلك نقاطك!)</small></p>
+  </div>
+</div>
+
+<div id="paused" class="overlay hidden">
+  <div class="card">
+    <h1>⏸️ إيقاف مؤقت</h1>
+    <p>خذ نفساً… الدودة نايمة 😴</p>
+    <button class="big-btn" id="resume-btn">▶ أكمل</button><br>
+    <button class="ghost-btn" id="restart-btn">🔄 من جديد</button>
+    <button class="ghost-btn" id="quit-btn">🚪 خروج للقائمة</button>
+  </div>
+</div>
+
+<div id="gameover" class="overlay hidden">
+  <div class="card">
+    <h1>💀 ماتت الدودة!</h1>
+    <p id="death-cause"></p>
+    <div id="final-score">0</div>
+    <div id="new-record" class="hidden">🎉 رقم قياسي جديد! 🎉</div>
+    <div class="stat-line">
+      <div><b id="final-length">0</b><span>الطول</span></div>
+      <div><b id="final-best">0</b><span>أفضل نتيجة</span></div>
+    </div>
+    <button class="big-btn" id="again-btn">🔄 العب مرة أخرى</button>
+  </div>
+</div>
+
+<script type="module">
+import { Game } from './js/doda.js';
+const boostBtn = document.getElementById('boost-btn');
+const press = (on) => (e) => { e.preventDefault(); Game.touchBoost = on; };
+boostBtn.addEventListener('pointerdown', press(true));
+window.addEventListener('pointerup', press(false));
+boostBtn.addEventListener('pointercancel', press(false));
+// `?auto=1` يبدأ اللعب فوراً (للاختبار الآلي والتقاط الصور)
+if (new URLSearchParams(location.search).get('auto') === '1') {
+  setTimeout(() => document.getElementById('start-btn').click(), 500);
+}
+</script>
+</body>
+</html>
